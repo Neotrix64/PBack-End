@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt')
 const salt = 10;
 
 const UserSchema = new Schema({
-    userName: {type: String, required: true},
+    userName: {type: String, required: true, unique:true},
     email: {type: String, required: true, unique:true},
     password: {type: String, required: true},
     secretKeys: {type: String, required: false},    
@@ -15,14 +15,15 @@ UserSchema.methods.HashPass = async function(password) {
     return await bcrypt.hash(password, salting);
 };
 
-UserSchema.methods.VerifyPass = async (password) =>{
-    const verificacion = await bcrypt.compare(password, hash);
-    if(verificacion){
-        return true;
-    } else {
-        return false;
-    }
-}
+// UserSchema.methods.VerifyPass = function(userPassword, callback) {
+//     bcrypt.compare(userPassword, this.contraseña, function(error, same) {
+//         if (error) {
+//             callback(error);
+//         } else {
+//             callback(null, same);
+//         }
+//     });
+// };
 
 const user = model("User", UserSchema)
 
