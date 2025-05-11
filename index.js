@@ -5,6 +5,8 @@ const usuarioEndpoint = require('./endpoints/UsuarioEndpoints')
 require('dotenv').config();
 const cors = require('cors');
 const port = process.env.PORT;
+const requestHistory = require('./endpoints/RequestHistoryEndpoints')
+const Endpoint = require('./endpoints/Endpoint-Endpoints')
 
 
 mongoConnection(process.env.MONGODB_CONNECTION);
@@ -16,7 +18,8 @@ app.use(cors({
 
 app.use(express.json());
 
-
+app.use('/endpoint', Endpoint);
+app.use('/RequesHistory', requestHistory);
 app.use('/usuario', usuarioEndpoint);
 
 app.get('/', (req,res) =>{
