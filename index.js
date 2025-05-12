@@ -8,9 +8,8 @@ const port = process.env.PORT;
 const requestHistory = require('./endpoints/RequestHistoryEndpoints')
 const Endpoint = require('./endpoints/Endpoint-Endpoints')
 const Folder = require('./endpoints/FolderEndpoints')
-
 const Project = require('./endpoints/ProjectEndpoints')
-
+const Enviroment = require('./endpoints/EnvironmentEndpoints')
 
 
 
@@ -23,6 +22,7 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use('/Enviroment',Enviroment );
 app.use('/Folder',Folder );
 app.use('/Project', Project);
 app.use('/endpoint', Endpoint);
