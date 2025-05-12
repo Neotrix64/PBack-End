@@ -7,6 +7,11 @@ const cors = require('cors');
 const port = process.env.PORT;
 const requestHistory = require('./endpoints/RequestHistoryEndpoints')
 const Endpoint = require('./endpoints/Endpoint-Endpoints')
+const Folder = require('./endpoints/FolderEndpoints')
+
+const Project = require('./endpoints/ProjectEndpoints')
+
+
 
 
 mongoConnection(process.env.MONGODB_CONNECTION);
@@ -18,6 +23,8 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use('/Folder',Folder );
+app.use('/Project', Project);
 app.use('/endpoint', Endpoint);
 app.use('/RequesHistory', requestHistory);
 app.use('/usuario', usuarioEndpoint);
