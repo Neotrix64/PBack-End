@@ -8,78 +8,96 @@ const Endpoint = require('../models/Endpoint');
 const Environment = require('../models/Environment');
 // etc...
 
-// ✅ POST /api/projects - Create a new project
+// ✅ CREATE project
 router.post('/Register', async (req, res) => {
   try {
     const { userId, name, description } = req.body;
 
-    const project = new Project({
-      userId,
-      name,
-      description
-    });
+    if (!userId || !name) {
+      return res.status(400).json({ success: false, message: 'userId and name are required.' });
+    }
 
+    const project = new Project({ userId, name, description });
     const saved = await project.save();
-    res.status(201).json(saved);
+
+    res.status(201).json({ success: true, message: 'Project created successfully.', data: saved });
   } catch (err) {
-    res.status(500).json({ error: 'Error creating project', details: err.message });
+    res.status(500).json({ success: false, message: 'Error creating project.', error: err.message });
   }
 });
 
-// ✅ GET /api/projects - Get all projects of a user
+// ✅ GET all projects of a user
 router.get('/', async (req, res) => {
   try {
-    const { userId } = req.query; // o extraído del token si usás auth
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId is required.' });
+    }
 
     const projects = await Project.find({ userId });
-    res.json(projects);
+    res.status(200).json({ success: true, message: 'Projects retrieved successfully.', data: projects });
   } catch (err) {
-    res.status(500).json({ error: 'Error fetching projects', details: err.message });
+    res.status(500).json({ success: false, message: 'Error fetching projects.', error: err.message });
   }
 });
 
-// ✅ GET /api/projects/:id - Get single project
+// ✅ GET single project
 router.get('/:id', async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
 
-    res.json(project);
+    res.status(200).json({ success: true, message: 'Project retrieved successfully.', data: project });
   } catch (err) {
-    res.status(500).json({ error: 'Error fetching project', details: err.message });
+    res.status(500).json({ success: false, message: 'Error fetching project.', error: err.message });
   }
 });
 
-// ✅ PUT /api/projects/:id - Update project
+// ✅ UPDATE project
 router.put('/:id', async (req, res) => {
   try {
-    const updated = await Project.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    });
+    const { name, description } = req.body;
 
-    if (!updated) return res.status(404).json({ error: 'Project not found' });
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Project name is required for update.' });
+    }
 
-    res.json(updated);
+    const updated = await Project.findByIdAndUpdate(
+      req.params.id,
+      { name, description },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Project updated successfully.', data: updated });
   } catch (err) {
-    res.status(500).json({ error: 'Error updating project', details: err.message });
+    res.status(500).json({ success: false, message: 'Error updating project.', error: err.message });
   }
 });
 
-// ✅ DELETE /api/projects/:id - Delete project + cascade
+// ✅ DELETE project with cascade
 router.delete('/:id', async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
-    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
 
-    // Elimina en cascada los recursos relacionados
+    // Cascade delete
+    const folderIds = await Folder.find({ projectId: req.params.id }).distinct('_id');
+    await Endpoint.deleteMany({ folderId: { $in: folderIds } });
     await Folder.deleteMany({ projectId: req.params.id });
-    await Endpoint.deleteMany({ folderId: { $in: (await Folder.find({ projectId: req.params.id }).distinct('_id')) } });
     await Environment.deleteMany({ projectId: req.params.id });
 
-    res.json({ message: 'Project and related data deleted successfully' });
+    res.status(200).json({ success: true, message: 'Project and related data deleted successfully.' });
   } catch (err) {
-    res.status(500).json({ error: 'Error deleting project', details: err.message });
+    res.status(500).json({ success: false, message: 'Error deleting project.', error: err.message });
   }
 });
 

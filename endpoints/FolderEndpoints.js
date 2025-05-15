@@ -3,58 +3,116 @@ const router = express.Router();
 const Folder = require('../models/Folder');
 const Endpoint = require('../models/Endpoint');
 
-// ✅ POST /api/folders - Create a new folder in a project
+// ✅ POST /api/folders/Register - Crear folder
 router.post('/Register', async (req, res) => {
   try {
     const { projectId, name } = req.body;
 
+    // Validación simple
+    if (!projectId || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Project ID and name are required',
+      });
+    }
+
     const folder = new Folder({ projectId, name });
     const saved = await folder.save();
 
-    res.status(201).json(saved);
+    res.status(201).json({
+      success: true,
+      message: 'Folder created successfully',
+      data: saved,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error creating folder', details: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error creating folder',
+      error: err.message,
+    });
   }
 });
 
-// ✅ GET /api/folders/:projectId - Get all folders in a project
+// ✅ GET /api/folders/:projectId - Obtener folders por proyecto
 router.get('/:projectId', async (req, res) => {
   try {
     const folders = await Folder.find({ projectId: req.params.projectId });
-    res.json(folders);
+
+    res.status(200).json({
+      success: true,
+      message: 'Folders retrieved successfully',
+      data: folders,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error fetching folders', details: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching folders',
+      error: err.message,
+    });
   }
 });
 
-// ✅ PUT /api/folders/:id - Rename a folder
+// ✅ PUT /api/folders/:id - Renombrar folder
 router.put('/:id', async (req, res) => {
   try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name is required',
+      });
+    }
+
     const updated = await Folder.findByIdAndUpdate(
       req.params.id,
-      { name: req.body.name },
+      { name },
       { new: true, runValidators: true }
     );
 
-    if (!updated) return res.status(404).json({ error: 'Folder not found' });
-    res.json(updated);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Folder updated successfully',
+      data: updated,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error updating folder', details: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error updating folder',
+      error: err.message,
+    });
   }
 });
 
-// ✅ DELETE /api/folders/:id - Delete folder and cascade delete endpoints
+// ✅ DELETE /api/folders/:id - Eliminar folder y sus endpoints
 router.delete('/:id', async (req, res) => {
   try {
     const folder = await Folder.findByIdAndDelete(req.params.id);
-    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+    if (!folder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found',
+      });
+    }
 
-    // Borrar todos los endpoints dentro del folder eliminado
     await Endpoint.deleteMany({ folderId: req.params.id });
 
-    res.json({ message: 'Folder and related endpoints deleted successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'Folder and related endpoints deleted successfully',
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error deleting folder', details: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting folder',
+      error: err.message,
+    });
   }
 });
 
